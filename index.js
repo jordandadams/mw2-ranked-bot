@@ -91,8 +91,8 @@ function getPageMessage(page, pageSize, leaderboard) {
 
 
 client.on('messageCreate', async (message) => {
-    if (message.content.includes('/t250') && message.content.includes('ranks')) {
-        message.channel.send('Retrieving leaderboard data...');
+    if (message.content.includes('/t250') && message.content.includes('all')) {
+        message.channel.send('Getting LIVE Top 250 Players...');
 
         axios
             .get('http://localhost:3000/players')
