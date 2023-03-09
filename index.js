@@ -150,6 +150,40 @@ client.on('messageCreate', async (message) => {
                 console.log(error);
                 message.channel.send('Error retrieving leaderboard data');
             });
+    } else if (message.content.startsWith('/t250')) {
+        let gamertag = message.content.split(' ')[1];
+        if (!gamertag) {
+            message.channel.send('Sorry, user not found in Top 250! Make sure to check spelling!');
+            return;
+        }
+
+        message.channel.send(`Searching Top 250 leaderboards for ${gamertag}...`);
+
+        axios
+            .get('http://localhost:3000/players')
+            .then(async (response) => {
+                const leaderboard = response.data;
+                const player = leaderboard.find((player) => player.gamertag.toLowerCase() === gamertag.toLowerCase());
+
+                if (!player) {
+                    message.channel.send(`Sorry, ${gamertag} is not in Top 250! Make sure to check spelling!`);
+                    return;
+                }
+
+                const leaderboardMessage = `Rank: ${player.rankdense} | Gamertag: ${player.gamertag} | Skill Rating: ${player.skillrating}`;
+
+                const embed = new EmbedBuilder()
+                    .setTitle(`Found ${gamertag} in Top 250!`)
+                    .setDescription(leaderboardMessage)
+                    .setTimestamp()
+                    .setColor('BLUE');
+
+                message.channel.send({ embeds: [embed] });
+            })
+            .catch((error) => {
+                console.log(error);
+                message.channel.send('Error retrieving leaderboard data');
+            });
     }
 });
 
