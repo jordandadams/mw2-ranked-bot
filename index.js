@@ -30,10 +30,26 @@ app.get('/players', (req, res) => {
             const $ = cheerio.load(response.data);
             const leaderboardData = $('script#__NEXT_DATA__').html();
             const leaderboard = JSON.parse(leaderboardData).props.pageProps.dataTop250.map((player) => {
+                console.log(player);
                 return {
+                    updatedAt: player.updated_at,
+                    date: player.dt,
+                    rank: player.rank,
+                    rankDense: player.rankdense,
+                    dRankDense: player.drankdense,
                     gamertag: player.gamertag,
-                    rankdense: player.rankdense,
-                    skillrating: player.skillrating,
+                    skillRating: player.skillrating,
+                    dSkillRating: player.dskillrating,
+                    isPro: player.ispro,
+                    sessionLive: player.sessionlive,
+                    sessionEnd: player.sessionend,
+                    sessionHours: player.sessionhours,
+                    sessionMinutes: player.sessionminutes,
+                    sessionWins: player.sessionwins,
+                    sessionLosses: player.sessionlosses,
+                    sessionSr: player.sessionsr,
+                    winStreak: player.winstreak,
+                    longestWinStreak: player.longestwinstreak
                 };
             });
             //console.log('responseData => ', response.data);
@@ -89,6 +105,22 @@ function getPageMessage(page, pageSize, leaderboard) {
     };
 }
 
+// Add the offlineDuration function
+function offlineDuration(player) {
+    if (!player.sessionLive) {
+        const sessionEnd = new Date(player.sessionEnd);
+        const currentTime = new Date();
+
+        const timeDifference = currentTime - sessionEnd; // in milliseconds
+        const minutes = Math.floor(timeDifference / (1000 * 60));
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        return { minutes, hours, days };
+    } else {
+        return null;
+    }
+}
 
 client.on('messageCreate', async (message) => {
     if (message.content.startsWith('/t250')) {
@@ -171,7 +203,12 @@ client.on('messageCreate', async (message) => {
                         return;
                     }
 
-                    const leaderboardMessage = `Rank: ${player.rankdense} | Gamertag: ${player.gamertag} | Skill Rating: ${player.skillrating}`;
+                    const offlineDurationData = offlineDuration(player);
+                    const offlineMessage = offlineDurationData
+                        ? `Offline for ${offlineDurationData.days} days, ${offlineDurationData.hours % 24} hours, and ${offlineDurationData.minutes % 60} minutes`
+                        : 'Playing';
+
+                    const leaderboardMessage = `**Rank:** ${player.rankDense}\n**Gamertag:** ${player.gamertag}\n**Total SR:** ${player.skillRating}\n**Today's SR +/-:** ${player.dSkillRating > 0 ? '+' : ''}${player.dSkillRating}\n**Current Win Streak:** ${player.winStreak}\n\n**Last Session:**\n**Status**: ${offlineMessage}\n**Time Played**: ${player.sessionHours}h ${player.sessionMinutes}m\n**SR**: ${player.sessionSr > 0 ? '+' : ''}${player.sessionSr}\n**Win/Loss**: ${player.sessionWins}/${player.sessionLosses}`;
 
                     const embed = new EmbedBuilder()
                         .setTitle(`Found ${gamertag} in Top 250!`)
@@ -183,6 +220,8 @@ client.on('messageCreate', async (message) => {
                         embeds: [embed]
                     });
                 })
+
+
                 .catch((error) => {
                     console.log(error);
                     message.channel.send('Error retrieving leaderboard data');
