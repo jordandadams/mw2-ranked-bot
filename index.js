@@ -30,7 +30,6 @@ app.get('/players', (req, res) => {
             const $ = cheerio.load(response.data);
             const leaderboardData = $('script#__NEXT_DATA__').html();
             const leaderboard = JSON.parse(leaderboardData).props.pageProps.dataTop250.map((player) => {
-                console.log(player);
                 return {
                     updatedAt: player.updated_at,
                     date: player.dt,
@@ -38,7 +37,7 @@ app.get('/players', (req, res) => {
                     rankDense: player.rankdense,
                     dRankDense: player.drankdense,
                     gamertag: player.gamertag,
-                    skillRating: player.skillrating,
+                    skillrating: player.skillrating,
                     dSkillRating: player.dskillrating,
                     isPro: player.ispro,
                     sessionLive: player.sessionlive,
@@ -92,7 +91,7 @@ function getPageMessage(page, pageSize, leaderboard) {
     const leaderboardPage = leaderboard.slice(start, end);
     const leaderboardMessage = leaderboardPage
         .map((player) => {
-            return `Rank: ${player.rankdense} | Gamertag: ${player.gamertag} | Skill Rating: ${player.skillrating}`;
+            return `Rank: ${player.rankDense} | Gamertag: ${player.gamertag} | Total SR: ${player.skillrating} | Today's SR +/-: ${player.dSkillRating > 0 ? '+' : ''}${player.dSkillRating}`;
         })
         .join('\n');
     const pageMessage = `${leaderboardMessage}`;
