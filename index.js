@@ -121,6 +121,18 @@ function offlineDuration(player) {
     }
 }
 
+function formatOfflineDuration(duration) {
+    if (duration.days > 1) { // Check if the user has been offline for more than one day
+        return "more than 1 day";
+    } else if (duration.days === 1) {
+        return "1 day";
+    } else if (duration.hours > 0) {
+        return `${duration.hours} hours`;
+    } else {
+        return `${duration.minutes} minutes`;
+    }
+}
+
 client.on('messageCreate', async (message) => {
     if (message.content.startsWith('/t250')) {
         let gamertag = message.content.split(' ')[1];
@@ -204,10 +216,14 @@ client.on('messageCreate', async (message) => {
 
                     const offlineDurationData = offlineDuration(player);
                     const offlineMessage = offlineDurationData
-                        ? `Offline for ${offlineDurationData.days} days, ${offlineDurationData.hours % 24} hours, and ${offlineDurationData.minutes % 60} minutes`
+                        ? `Offline for ${formatOfflineDuration(offlineDurationData)}`
                         : 'Playing';
 
-                    const leaderboardMessage = `**Rank:** ${player.rankDense}\n**Gamertag:** ${player.gamertag}\n**Total SR:** ${player.skillrating}\n**Today's SR +/-:** ${player.dSkillRating > 0 ? '+' : ''}${player.dSkillRating}\n**Current Win Streak:** ${player.winStreak}\n\n**Last Session:**\n**Status**: ${offlineMessage}\n**Time Played**: ${player.sessionHours}h ${player.sessionMinutes}m\n**SR**: ${player.sessionSr > 0 ? '+' : ''}${player.sessionSr}\n**Win/Loss**: ${player.sessionWins}/${player.sessionLosses}`;
+                    const timePlayedMessage = (player.sessionHours || player.sessionMinutes)
+                        ? `${player.sessionHours}h ${player.sessionMinutes}m`
+                        : 'Has not played today';
+
+                    const leaderboardMessage = `**Rank:** ${player.rankDense}\n**Gamertag:** ${player.gamertag}\n**Total SR:** ${player.skillrating}\n**Today's SR +/-:** ${player.dSkillRating > 0 ? '+' : ''}${player.dSkillRating}\n**Current Win Streak:** ${player.winStreak}\n\n**Last Session:**\n**Status**: ${offlineMessage}\n**Time Played**: ${timePlayedMessage}\n**SR**: ${player.sessionSr > 0 ? '+' : ''}${player.sessionSr}\n**Win/Loss**: ${player.sessionWins}/${player.sessionLosses}`;
 
                     const embed = new EmbedBuilder()
                         .setTitle(`Found ${gamertag} in Top 250!`)
