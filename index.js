@@ -207,7 +207,7 @@ client.on('messageCreate', async (message) => {
                         ? `Offline for ${offlineDurationData.days} days, ${offlineDurationData.hours % 24} hours, and ${offlineDurationData.minutes % 60} minutes`
                         : 'Playing';
 
-                    const leaderboardMessage = `**Rank:** ${player.rankDense}\n**Gamertag:** ${player.gamertag}\n**Total SR:** ${player.skillRating}\n**Today's SR +/-:** ${player.dSkillRating > 0 ? '+' : ''}${player.dSkillRating}\n**Current Win Streak:** ${player.winStreak}\n\n**Last Session:**\n**Status**: ${offlineMessage}\n**Time Played**: ${player.sessionHours}h ${player.sessionMinutes}m\n**SR**: ${player.sessionSr > 0 ? '+' : ''}${player.sessionSr}\n**Win/Loss**: ${player.sessionWins}/${player.sessionLosses}`;
+                    const leaderboardMessage = `**Rank:** ${player.rankDense}\n**Gamertag:** ${player.gamertag}\n**Total SR:** ${player.skillrating}\n**Today's SR +/-:** ${player.dSkillRating > 0 ? '+' : ''}${player.dSkillRating}\n**Current Win Streak:** ${player.winStreak}\n\n**Last Session:**\n**Status**: ${offlineMessage}\n**Time Played**: ${player.sessionHours}h ${player.sessionMinutes}m\n**SR**: ${player.sessionSr > 0 ? '+' : ''}${player.sessionSr}\n**Win/Loss**: ${player.sessionWins}/${player.sessionLosses}`;
 
                     const embed = new EmbedBuilder()
                         .setTitle(`Found ${gamertag} in Top 250!`)
