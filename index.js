@@ -141,109 +141,49 @@ client.on('messageCreate', async (message) => {
             return;
         }
 
-        if (gamertag.toLowerCase() === 'all') {
-            message.channel.send('Getting LIVE Top 250 Players...');
+        message.channel.send(`Searching Top 250 leaderboards for ${gamertag}...`);
 
-            axios
-                .get('http://localhost:3000/players')
-                .then(async (response) => {
+        axios
+            .get('http://localhost:3000/players')
+            .then(async (response) => {
+                const leaderboard = response.data;
+                const player = leaderboard.find((player) => player.gamertag.toLowerCase() === gamertag.toLowerCase());
 
-                    const leaderboard = response.data;
-                    leaderboard.sort((a, b) => a.rankdense - b.rankdense); // Sort by rankdense
-                    const pageSize = 10;
-                    const totalPages = Math.ceil(leaderboard.length / pageSize);
+                if (!player) {
+                    message.channel.send(`Sorry, ${gamertag} is not in Top 250! Make sure to check spelling!`);
+                    return;
+                }
 
-                    let currentPage = 0;
-                    const { leaderboardMessage, buttons } = getPageMessage(currentPage, pageSize, leaderboard);
-                    const embed = new EmbedBuilder().setDescription(leaderboardMessage);
+                const offlineDurationData = offlineDuration(player);
+                const offlineMessage = offlineDurationData
+                    ? `Offline for ${formatOfflineDuration(offlineDurationData)}`
+                    : 'Playing';
 
-                    const messageSent = await message.channel.send({
-                        embeds: [embed],
-                        components: [buttons],
-                    });
+                const timePlayedMessage = (player.sessionHours || player.sessionMinutes)
+                    ? `${player.sessionHours}h ${player.sessionMinutes}m`
+                    : 'Has not played today';
 
-                    const filter = (interaction) => {
-                        if (interaction.user.id !== message.author.id) return false;
-                        if (!interaction.isButton()) return false;
-                        const [buttonAction, buttonPage] = interaction.customId.split('_');
-                        if (!['previous', 'next'].includes(buttonAction)) return false;
-                        if (buttonAction === 'previous' && currentPage === 0) return false;
-                        if (buttonAction === 'next' && currentPage === totalPages - 1) return false;
-                        return true;
-                    };
+                const leaderboardMessage = `**Rank:** ${player.rankDense}\n**Gamertag:** ${player.gamertag}\n**Total SR:** ${player.skillrating}\n**Today's SR +/-:** ${player.dSkillRating > 0 ? '+' : ''}${player.dSkillRating}\n**Current Win Streak:** ${player.winStreak}\n\n**Last Session:**\n**Status**: ${offlineMessage}\n**Time Played**: ${timePlayedMessage}\n**SR**: ${player.sessionSr > 0 ? '+' : ''}${player.sessionSr}\n**Win/Loss**: ${player.sessionWins}/${player.sessionLosses}`;
 
-                    const collector = messageSent.createMessageComponentCollector({
-                        filter,
-                        time: 60_000, // Collect for 1 minute
-                    });
+                const embed = new EmbedBuilder()
+                    .setTitle(`Found ${gamertag} in Top 250!`)
+                    .setDescription(leaderboardMessage)
+                    .setTimestamp()
+                    .setColor('BLUE');
 
-                    collector.on('collect', (interaction) => {
-                        const [buttonAction, buttonPage] = interaction.customId.split('_');
-                        currentPage = buttonAction === 'previous' ? currentPage - 1 : currentPage + 1;
-                        const { leaderboardMessage, buttons } = getPageMessage(currentPage, pageSize, leaderboard);
-                        const newEmbed = new EmbedBuilder().setDescription(leaderboardMessage);
-
-                        interaction.update({
-                            embeds: [newEmbed],
-                            components: [buttons],
-                        });
-                    });
-
-                    collector.on('end', () => {
-                        const endButtons = createPaginationButtons(currentPage);
-                        endButtons.components.forEach((button) => button.setDisabled(true));
-                        messageSent.edit({ components: [endButtons] });
-                    });
-
-                })
-                .catch((error) => {
-                    console.log(error);
-                    message.channel.send('Error retrieving leaderboard data');
+                message.channel.send({
+                    embeds: [embed]
                 });
-        } else {
-            message.channel.send(`Searching Top 250 leaderboards for ${gamertag}...`);
-
-            axios
-                .get('http://localhost:3000/players')
-                .then(async (response) => {
-                    const leaderboard = response.data;
-                    const player = leaderboard.find((player) => player.gamertag.toLowerCase() === gamertag.toLowerCase());
-
-                    if (!player) {
-                        message.channel.send(`Sorry, ${gamertag} is not in Top 250! Make sure to check spelling!`);
-                        return;
-                    }
-
-                    const offlineDurationData = offlineDuration(player);
-                    const offlineMessage = offlineDurationData
-                        ? `Offline for ${formatOfflineDuration(offlineDurationData)}`
-                        : 'Playing';
-
-                    const timePlayedMessage = (player.sessionHours || player.sessionMinutes)
-                        ? `${player.sessionHours}h ${player.sessionMinutes}m`
-                        : 'Has not played today';
-
-                    const leaderboardMessage = `**Rank:** ${player.rankDense}\n**Gamertag:** ${player.gamertag}\n**Total SR:** ${player.skillrating}\n**Today's SR +/-:** ${player.dSkillRating > 0 ? '+' : ''}${player.dSkillRating}\n**Current Win Streak:** ${player.winStreak}\n\n**Last Session:**\n**Status**: ${offlineMessage}\n**Time Played**: ${timePlayedMessage}\n**SR**: ${player.sessionSr > 0 ? '+' : ''}${player.sessionSr}\n**Win/Loss**: ${player.sessionWins}/${player.sessionLosses}`;
-
-                    const embed = new EmbedBuilder()
-                        .setTitle(`Found ${gamertag} in Top 250!`)
-                        .setDescription(leaderboardMessage)
-                        .setTimestamp()
-                        .setColor('BLUE');
-
-                    message.channel.send({
-                        embeds: [embed]
-                    });
-                })
+            })
 
 
-                .catch((error) => {
-                    console.log(error);
-                    message.channel.send('Error retrieving leaderboard data');
-                });
-        }
+            .catch((error) => {
+                console.log(error);
+                message.channel.send('Error retrieving leaderboard data');
+            });
     }
-});
+}
+);
 
 
 client.login(token);
